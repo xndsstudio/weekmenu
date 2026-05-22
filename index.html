@@ -274,8 +274,20 @@
   .progress-bar { background: #e0e0e0; border-radius: 1px; height: 3px; }
   .progress-fill { background: #111; border-radius: 1px; height: 3px; transition: width 0.3s; }
 
+  /* ── DAG-FILTER BAR ── */
+  .shop-day-bar {
+    display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 14px;
+  }
+  .shop-day-btn {
+    padding: 4px 10px; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.2px;
+    border: 1px solid #ccc; border-radius: 2px; background: none;
+    cursor: pointer; color: #888; transition: all 0.15s;
+  }
+  .shop-day-btn:hover { border-color: #111; color: #111; }
+  .shop-day-btn.active { background: #111; color: #fff; border-color: #111; }
+
   @media print {
-    header .week-label, .tabs-bar, .print-btn { display: none !important; }
+    header .week-label, .tabs-bar, .print-btn, .shop-day-bar { display: none !important; }
     .shopping-panel { display: block !important; }
     .day-panel { display: none !important; }
     body { background: white; }
@@ -809,6 +821,17 @@
     <p>Week voor 1 gezin &nbsp;&middot;&nbsp; Lidl</p>
   </div>
 
+  <div class="shop-day-bar">
+    <button class="shop-day-btn active" onclick="showShopDay('week')">Hele week</button>
+    <button class="shop-day-btn" onclick="showShopDay(0)">Maandag</button>
+    <button class="shop-day-btn" onclick="showShopDay(1)">Dinsdag</button>
+    <button class="shop-day-btn" onclick="showShopDay(2)">Woensdag</button>
+    <button class="shop-day-btn" onclick="showShopDay(3)">Donderdag</button>
+    <button class="shop-day-btn" onclick="showShopDay(4)">Vrijdag</button>
+    <button class="shop-day-btn" onclick="showShopDay(5)">Zaterdag</button>
+    <button class="shop-day-btn" onclick="showShopDay(6)">Zondag</button>
+  </div>
+
   <button class="print-btn" onclick="window.print()">Afdrukken / opslaan als PDF</button>
 
   <div class="portie-note">
@@ -833,6 +856,7 @@
 </div><!-- end .content -->
 
 <script>
+// ── NAVIGATIE ──
 const tabs = document.querySelectorAll('.tab-btn');
 function showDay(i) {
   document.querySelectorAll('.day-panel').forEach(p => p.classList.remove('active'));
@@ -848,109 +872,258 @@ function showShopping() {
   tabs[7].classList.add('active');
 }
 
-// Week label
+// ── WEEK LABEL & VANDAAG ──
 const now = new Date();
-const d = now.getDay();
-const monday = new Date(new Date().setDate(now.getDate() - d + (d === 0 ? -6 : 1)));
-document.getElementById('week-label').textContent = monday.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
-
-// Today marker
+const wd = now.getDay();
+const monday = new Date(new Date().setDate(now.getDate() - wd + (wd === 0 ? -6 : 1)));
+document.getElementById('week-label').textContent = monday.toLocaleDateString('nl-NL', { day:'numeric', month:'long', year:'numeric' });
 const todayIdx = (new Date().getDay() + 6) % 7;
 if (todayIdx >= 0 && todayIdx < 7) tabs[todayIdx].classList.add('today-marker');
 
-// Shopping data
+// ── BOODSCHAPPEN — HELE WEEK ──
 const boodschappen = {
   'vlees-items': [
-    {qty:'1.5 kg', name:'Rundergehakt (ma avond)'},
-    {qty:'1.6 kg', name:'Zalmfilet (di avond)'},
-    {qty:'800g', name:'Kipfilet (wo avond + lunch)'},
-    {qty:'4 stuks', name:'Biefstuk ~150g p.s. (do avond)'},
-    {qty:'800g', name:'Kabeljauwfilet (vr avond)'},
-    {qty:'800g', name:'Varkensstoofvlees (za avond)'},
-    {qty:'8 stuks', name:'Lamskoteletten (zo avond)'},
-    {qty:'100g', name:'Spekjes (ontbijt + lunch)'},
-    {qty:'100g', name:'Gerookte zalm (za ontbijt)'},
-    {qty:'2 blikjes', name:'Tonijn op water (wo + vr)'},
-    {qty:'100g', name:'Bacon (za lunch)'},
+    {qty:'1.5 kg',   name:'Rundergehakt (ma avond)'},
+    {qty:'1.6 kg',   name:'Zalmfilet (di avond)'},
+    {qty:'800g',     name:'Kipfilet (wo avond + za lunch)'},
+    {qty:'4 stuks',  name:'Biefstuk ~150g p.s. (do avond)'},
+    {qty:'800g',     name:'Kabeljauwfilet (vr avond)'},
+    {qty:'800g',     name:'Varkensstoofvlees (za avond)'},
+    {qty:'8 stuks',  name:'Lamskoteletten (zo avond)'},
+    {qty:'100g',     name:'Spekjes'},
+    {qty:'40g',      name:'Gerookte zalm (za ontbijt)'},
+    {qty:'2 blikjes',name:'Tonijn op water'},
+    {qty:'40g',      name:'Bacon (za lunch)'},
   ],
   'groenten-items': [
-    {qty:'200g', name:'Verse spinazie'},
-    {qty:'2 stuks', name:"Avocado's"},
-    {qty:'1 stuks', name:'Komkommer'},
-    {qty:'4 stuks', name:'Courgette'},
-    {qty:'2 stuks', name:'Bloemkool'},
-    {qty:'250g', name:'Champignons'},
-    {qty:'5 stuks', name:"Paprika's (mix)"},
-    {qty:'1.5 kg', name:'Groene asperges'},
-    {qty:'2 stuks', name:'Broccoli'},
-    {qty:'2 stuks', name:'Tomaten'},
-    {qty:'40g', name:'Frambozen'},
-    {qty:'40g', name:'Blauwe bessen'},
-    {qty:'60g', name:'Aardbeien'},
+    {qty:'200g',     name:'Verse spinazie'},
+    {qty:'2 stuks',  name:"Avocado's"},
+    {qty:'1 stuks',  name:'Komkommer'},
+    {qty:'4 stuks',  name:'Courgette'},
+    {qty:'2 stuks',  name:'Bloemkool'},
+    {qty:'300g',     name:'Champignons'},
+    {qty:'5 stuks',  name:"Paprika's (mix)"},
+    {qty:'1.5 kg',   name:'Groene asperges'},
+    {qty:'2 struiken',name:'Broccoli'},
+    {qty:'2 stuks',  name:'Tomaten'},
+    {qty:'40g',      name:'Frambozen'},
+    {qty:'40g',      name:'Blauwe bessen'},
+    {qty:'60g',      name:'Aardbeien'},
     {qty:'1 stronk', name:'Selderij'},
-    {qty:'1 stuks', name:'Aubergine'},
-    {qty:'1/2 stuks', name:'Knolselderij'},
-    {qty:'1 stuks', name:'Prei'},
-    {qty:'4 stuks', name:'Citroen'},
-    {qty:'1 zak', name:'Gemengde sla / Romaine'},
-    {qty:'1 bos', name:'Verse dille'},
+    {qty:'1 stuks',  name:'Aubergine'},
+    {qty:'½ stuks',  name:'Knolselderij'},
+    {qty:'1 stuks',  name:'Prei'},
+    {qty:'4 stuks',  name:'Citroen'},
+    {qty:'1 zak',    name:'Gemengde sla / Romaine'},
+    {qty:'1 bos',    name:'Verse dille'},
   ],
   'zuivel-items': [
     {qty:'15 stuks', name:'Eieren'},
-    {qty:'150g', name:'Volle Griekse yoghurt'},
-    {qty:'150g', name:'Volle kwark'},
-    {qty:'200g', name:'Roomkaas naturel'},
-    {qty:'500ml', name:'Slagroom'},
-    {qty:'1 blik', name:'Kokosmelk'},
-    {qty:'1 bol', name:'Mozzarella'},
-    {qty:'150g', name:'Belegen kaas'},
-    {qty:'200g', name:'Boter'},
-    {qty:'50g', name:'Parmezaan'},
+    {qty:'150g',     name:'Volle Griekse yoghurt'},
+    {qty:'150g',     name:'Volle kwark'},
+    {qty:'200g',     name:'Roomkaas naturel'},
+    {qty:'500ml',    name:'Slagroom'},
+    {qty:'1 blik',   name:'Kokosmelk'},
+    {qty:'1 bol',    name:'Mozzarella'},
+    {qty:'150g',     name:'Belegen kaas'},
+    {qty:'500g',     name:'Boter'},
+    {qty:'50g',      name:'Parmezaan'},
   ],
   'droog-items': [
-    {qty:'100g', name:'Walnoten'},
-    {qty:'100g', name:'Amandelen'},
-    {qty:'1 fles', name:'Extra vierge olijfolie'},
+    {qty:'100g',     name:'Walnoten'},
+    {qty:'100g',     name:'Amandelen'},
+    {qty:'1 fles',   name:'Extra vierge olijfolie'},
     {qty:'2 potten', name:'Tomatensaus (zonder suiker)'},
-    {qty:'1 pot', name:'Groene pesto'},
-    {qty:'1 pot', name:'Groene olijven'},
-    {qty:'1 pot', name:'Kappertjes'},
-    {qty:'1 pak', name:'Lijnzaad'},
-    {qty:'1 pak', name:'Chiazaad'},
-    {qty:'1 pot', name:'Dijon mosterd'},
-    {qty:'1 zakje', name:'Pijnboompitten'},
+    {qty:'1 pot',    name:'Groene pesto'},
+    {qty:'1 pot',    name:'Groene olijven'},
+    {qty:'1 pot',    name:'Kappertjes'},
+    {qty:'1 pak',    name:'Lijnzaad'},
+    {qty:'1 pak',    name:'Chiazaad'},
+    {qty:'1 pot',    name:'Dijon mosterd'},
+    {qty:'1 zakje',  name:'Pijnboompitten'},
     {qty:'1 flesje', name:'Vanille extract'},
   ],
 };
 
+// ── BOODSCHAPPEN — PER DAG ──
+const V='vlees-items', G='groenten-items', Z='zuivel-items', D='droog-items';
+const dagBoodschappen = [
+  { naam:'Maandag', items:[
+    {cat:V, qty:'30g',     name:'Spekjes (ontbijt)'},
+    {cat:V, qty:'120g',    name:'Kipfilet (lunch)'},
+    {cat:V, qty:'1.5 kg',  name:'Rundergehakt (avond 8 pers.)'},
+    {cat:G, qty:'40g',     name:'Verse spinazie (ontbijt)'},
+    {cat:G, qty:'½ stuks', name:'Avocado (lunch)'},
+    {cat:G, qty:'¼ stuks', name:'Komkommer (lunch)'},
+    {cat:G, qty:'1 zak',   name:'Gemengde sla (lunch)'},
+    {cat:G, qty:'2 grote', name:'Bloemkool (avond)'},
+    {cat:G, qty:'2 stuks', name:'Ui (avond)'},
+    {cat:Z, qty:'4 stuks', name:'Eieren (2 ontbijt + 2 avond)'},
+    {cat:Z, qty:'200ml',   name:'Slagroom (avond)'},
+    {cat:Z, qty:'30g',     name:'Belegen kaas (snack)'},
+    {cat:D, qty:'2 potten',name:'Tomatensaus (avond)'},
+    {cat:D, qty:'handvol', name:'Walnoten (snack)'},
+  ]},
+  { naam:'Dinsdag', items:[
+    {cat:V, qty:'1.6 kg',  name:'Zalmfilet (avond 8 pers.)'},
+    {cat:G, qty:'½ stuks', name:'Courgette (lunch)'},
+    {cat:G, qty:'1.5 kg',  name:'Groene asperges (avond)'},
+    {cat:G, qty:'¼ stuks', name:'Komkommer (snack)'},
+    {cat:G, qty:'3 stuks', name:'Citroen (avond)'},
+    {cat:G, qty:'40g',     name:'Frambozen (ontbijt)'},
+    {cat:G, qty:'1 bos',   name:'Verse dille (avond + snack)'},
+    {cat:Z, qty:'150g',    name:'Volle Griekse yoghurt (ontbijt)'},
+    {cat:Z, qty:'200ml+',  name:'Slagroom (lunch + avond)'},
+    {cat:Z, qty:'30g',     name:'Roomkaas naturel (snack)'},
+    {cat:Z, qty:'180g',    name:'Boter (avond)'},
+    {cat:D, qty:'20g',     name:'Walnoten (ontbijt)'},
+  ]},
+  { naam:'Woensdag', items:[
+    {cat:V, qty:'800g',    name:'Kipfilet (avond 4 pers.)'},
+    {cat:V, qty:'1 blikje',name:'Tonijn op water (lunch)'},
+    {cat:G, qty:'3½ stuks',name:'Courgette (avond)'},
+    {cat:G, qty:'½ stuks', name:'Paprika (ontbijt)'},
+    {cat:G, qty:'75g',     name:'Champignons (ontbijt)'},
+    {cat:G, qty:'1 stuks', name:'Tomaat (lunch)'},
+    {cat:G, qty:'handvol', name:'Olijven (lunch + snack)'},
+    {cat:Z, qty:'3 stuks', name:'Eieren (2 ontbijt + 1 lunch)'},
+    {cat:Z, qty:'20g',     name:'Geraspte kaas (ontbijt)'},
+    {cat:Z, qty:'30g',     name:'Parmezaan (avond)'},
+    {cat:D, qty:'½ pot',   name:'Groene pesto (avond)'},
+    {cat:D, qty:'1 zakje', name:'Pijnboompitten (avond)'},
+    {cat:D, qty:'handvol', name:'Amandelen (snack)'},
+  ]},
+  { naam:'Donderdag', items:[
+    {cat:V, qty:'30g',     name:'Spekjes (lunch)'},
+    {cat:V, qty:'4 stuks', name:'Biefstuk ~150g p.s. (avond)'},
+    {cat:G, qty:'¼ kleine',name:'Bloemkool (lunch)'},
+    {cat:G, qty:'40g',     name:'Blauwe bessen (ontbijt)'},
+    {cat:G, qty:'200g',    name:'Verse spinazie (avond)'},
+    {cat:G, qty:'200g',    name:'Champignons (avond)'},
+    {cat:Z, qty:'150g',    name:'Volle kwark (ontbijt)'},
+    {cat:Z, qty:'40ml',    name:'Slagroom (lunch)'},
+    {cat:Z, qty:'1 stuks', name:'Ei (snack)'},
+    {cat:Z, qty:'80g',     name:'Boter (avond)'},
+    {cat:D, qty:'1 tl',    name:'Lijnzaad (ontbijt)'},
+    {cat:D, qty:'1 pot',   name:'Dijon mosterd (snack)'},
+  ]},
+  { naam:'Vrijdag', items:[
+    {cat:V, qty:'800g',    name:'Kabeljauwfilet (avond 4 pers.)'},
+    {cat:V, qty:'½ blikje',name:'Tonijn op water (lunch)'},
+    {cat:G, qty:'½ stuks', name:'Avocado (ontbijt)'},
+    {cat:G, qty:'1 stuks', name:'Tomaat (ontbijt)'},
+    {cat:G, qty:'1 stuks', name:'Paprika (lunch)'},
+    {cat:G, qty:'2 struiken',name:'Broccoli (avond)'},
+    {cat:G, qty:'2 stengels',name:'Selderij (snack)'},
+    {cat:G, qty:'1 stuks', name:'Citroen (avond)'},
+    {cat:Z, qty:'1 stuks', name:'Ei (ontbijt)'},
+    {cat:Z, qty:'70g',     name:'Roomkaas (lunch + snack)'},
+    {cat:Z, qty:'80g',     name:'Boter (avond)'},
+    {cat:D, qty:'1 pot',   name:'Kappertjes (avond)'},
+  ]},
+  { naam:'Zaterdag', items:[
+    {cat:V, qty:'40g',     name:'Gerookte zalm (ontbijt)'},
+    {cat:V, qty:'120g',    name:'Kipfilet (lunch)'},
+    {cat:V, qty:'40g',     name:'Bacon (lunch)'},
+    {cat:V, qty:'800g',    name:'Varkensstoofvlees (avond 4 pers.)'},
+    {cat:G, qty:'½ stuks', name:'Knolselderij (avond)'},
+    {cat:G, qty:'1 stuks', name:'Prei (avond)'},
+    {cat:G, qty:'1 zak',   name:'Romaine sla (lunch)'},
+    {cat:Z, qty:'2 stuks', name:'Eieren (ontbijt + lunch)'},
+    {cat:Z, qty:'150ml',   name:'Slagroom (avond)'},
+    {cat:Z, qty:'20g',     name:'Parmezaan (lunch)'},
+    {cat:Z, qty:'30g',     name:'Belegen kaas (snack)'},
+    {cat:D, qty:'handvol', name:'Notenmix (snack)'},
+    {cat:D, qty:'handvol', name:'Kappertjes (ontbijt)'},
+    {cat:Z, qty:'1.5 el',  name:'Chiazaad — za. avond voor zo. ontbijt'},
+    {cat:Z, qty:'80ml',    name:'Kokosmelk — za. avond voor zo. ontbijt'},
+  ]},
+  { naam:'Zondag', items:[
+    {cat:V, qty:'8 stuks', name:'Lamskoteletten (avond 4 pers.)'},
+    {cat:G, qty:'60g',     name:'Aardbeien (ontbijt)'},
+    {cat:G, qty:'½ stuks', name:'Courgette (lunch)'},
+    {cat:G, qty:'2 grote', name:'Champignons (lunch + snack)'},
+    {cat:G, qty:'2 stuks', name:"Paprika's (avond)"},
+    {cat:G, qty:'1 stuks', name:'Aubergine (avond)'},
+    {cat:G, qty:'1 bos',   name:'Verse rozemarijn (avond)'},
+    {cat:Z, qty:'½ bol',   name:'Mozzarella (lunch)'},
+    {cat:Z, qty:'30g',     name:'Roomkaas (snack)'},
+    {cat:D, qty:'2 el',    name:'Tomatensaus (lunch)'},
+    {cat:D, qty:'handvol', name:'Olijven (lunch + snack)'},
+  ]},
+];
+
+// ── SHOPPING LOGIC ──
 let checkState = {};
+let huidigDag = 'week';
+
+function clearShopContainers() {
+  ['vlees-items','groenten-items','zuivel-items','droog-items'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.innerHTML = ''; el.closest('.shop-cat').style.display = ''; }
+  });
+}
+
+function makeShopItem(key, qty, name) {
+  const div = document.createElement('div');
+  div.className = 'shop-item' + (checkState[key] ? ' checked' : '');
+  const ahQuery = encodeURIComponent(name.replace(/\s*[\-–]\s*.*$/, '').replace(/\s*\(.*?\)/g, '').trim());
+  div.innerHTML = `<input type="checkbox" id="${key}" ${checkState[key]?'checked':''}><label for="${key}" style="display:flex;gap:4px;cursor:pointer;flex:1;"><span class="qty">${qty}</span><span>${name}</span></label><a class="ah-link" href="https://www.ah.nl/zoeken?query=${ahQuery}" target="_blank" onclick="event.stopPropagation()">AH</a>`;
+  div.querySelector('input').addEventListener('change', e => {
+    checkState[key] = e.target.checked;
+    div.classList.toggle('checked', e.target.checked);
+    updateProgress();
+  });
+  return div;
+}
+
 function buildShoppingList() {
+  clearShopContainers();
+  checkState = {};
   Object.keys(boodschappen).forEach(cid => {
     const container = document.getElementById(cid);
     if (!container) return;
     boodschappen[cid].forEach((item, i) => {
-      const key = cid + '-' + i;
-      const div = document.createElement('div');
-      div.className = 'shop-item' + (checkState[key] ? ' checked' : '');
-      const ahQuery = encodeURIComponent(item.name.replace(/\s*\(.*?\)/g, '').trim());
-      div.innerHTML = `<input type="checkbox" id="${key}" ${checkState[key]?'checked':''}><label for="${key}" style="display:flex;gap:4px;cursor:pointer;flex:1;"><span class="qty">${item.qty}</span><span>${item.name}</span></label><a class="ah-link" href="https://www.ah.nl/zoeken?query=${ahQuery}" target="_blank" onclick="event.stopPropagation()">AH</a>`;
-      div.querySelector('input').addEventListener('change', e => {
-        checkState[key] = e.target.checked;
-        div.classList.toggle('checked', e.target.checked);
-        updateProgress();
-      });
-      container.appendChild(div);
+      container.appendChild(makeShopItem(cid + '-' + i, item.qty, item.name));
     });
   });
   updateProgress();
 }
+
+function buildDayList(d) {
+  clearShopContainers();
+  checkState = {};
+  dagBoodschappen[d].items.forEach((item, i) => {
+    const container = document.getElementById(item.cat);
+    if (!container) return;
+    container.appendChild(makeShopItem('dag-' + d + '-' + i, item.qty, item.name));
+  });
+  // Verberg lege categorieën
+  document.querySelectorAll('.shop-cat').forEach(cat => {
+    cat.style.display = cat.querySelector('.shop-items').children.length ? '' : 'none';
+  });
+  updateProgress();
+}
+
 function updateProgress() {
-  const total = Object.values(boodschappen).reduce((s,a) => s+a.length, 0);
+  const total = huidigDag === 'week'
+    ? Object.values(boodschappen).reduce((s,a) => s+a.length, 0)
+    : dagBoodschappen[huidigDag].items.length;
   const done = Object.values(checkState).filter(Boolean).length;
-  const pct = Math.round(done/total*100);
+  const pct = total > 0 ? Math.round(done / total * 100) : 0;
   document.getElementById('progress-pct').textContent = pct + '%';
   document.getElementById('progress-fill').style.width = pct + '%';
 }
+
+function showShopDay(d) {
+  huidigDag = d;
+  document.querySelectorAll('.shop-day-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', d === 'week' ? i === 0 : i === d + 1);
+  });
+  if (d === 'week') buildShoppingList();
+  else buildDayList(d);
+}
+
 buildShoppingList();
 </script>
 </body>
