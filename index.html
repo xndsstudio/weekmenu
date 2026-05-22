@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Koolhydraatarm Weekmenu</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f2f2f2; color: #111; font-size: 14px; line-height: 1.5; }
+
+  /* ── HEADER ── */
+  header {
+    background: #111;
+    color: #fff;
+    padding: 20px 24px 16px;
+  }
+  header h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.3px; }
+  header p { font-size: 0.75rem; color: #aaa; margin-top: 3px; }
+  .week-label { font-size: 0.72rem; color: #777; margin-top: 5px; }
+  .bronnen { font-size: 0.68rem; color: #666; margin-top: 8px; padding-top: 8px; border-top: 1px solid #333; line-height: 1.6; }
+  .bronnen strong { color: #aaa; }
+
+  .portie-legenda {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;
+  }
+  .portie-chip {
+    font-size: 0.63rem; font-weight: 600; letter-spacing: 0.4px;
+    border: 1px solid #444; border-radius: 2px; padding: 2px 7px; color: #aaa;
+    text-transform: uppercase;
+  }
+
+  /* ── TABS ── */
+  .tabs-bar {
+    display: flex; overflow-x: auto;
+    background: #fff;
+    border-bottom: 1px solid #ddd;
+    padding: 0 14px;
+    scrollbar-width: none;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .tabs-bar::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    flex-shrink: 0; padding: 10px 13px;
+    border: none; background: none; cursor: pointer;
+    font-size: 0.76rem; font-weight: 600; color: #999;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+    transition: color 0.15s;
+  }
+  .tab-btn:hover { color: #111; }
+  .tab-btn.active { color: #111; border-bottom-color: #111; }
+  .tab-btn.today-marker { position: relative; }
+  .tab-btn.today-marker::after {
+    content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
+    width: 4px; height: 4px; background: #111; border-radius: 50%;
+  }
+
+  /* ── CONTENT ── */
+  .content { padding: 16px; max-width: 740px; margin: 0 auto; }
+  .day-panel, .shopping-panel { display: none; }
+  .day-panel.active, .shopping-panel.active { display: block; }
+
+  /* ── DAY HEADER ── */
+  .day-header {
+    display: flex; align-items: baseline; gap: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #111;
+  }
+  .day-name { font-size: 1.1rem; font-weight: 800; letter-spacing: -0.4px; color: #111; }
+  .day-sub { font-size: 0.72rem; color: #888; font-weight: 400; }
+
+  /* ── MEAL SECTION LABELS ── */
+  .meal-section-sep {
+    display: flex; align-items: center; gap: 10px;
+    margin: 14px 0 8px;
+  }
+  .meal-section-sep .label {
+    font-size: 0.6rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 1.2px; white-space: nowrap;
+  }
+  .meal-section-sep .line { flex: 1; height: 1px; }
+
+  /* OCHTEND */
+  .sep-ochtend .label { color: #888; }
+  .sep-ochtend .line { background: #ddd; }
+  /* MIDDAG */
+  .sep-middag .label { color: #555; }
+  .sep-middag .line { background: #bbb; }
+  /* AVOND */
+  .sep-avond .label { color: #111; }
+  .sep-avond .line { background: #111; }
+
+  /* ── MEAL CARDS ── */
+  .meal-card { border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
+
+  /* OCHTEND card — licht, wit */
+  .meal-card.ochtend {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+  }
+  .meal-card.ochtend .card-header {
+    background: #fff;
+    border-bottom: 1px solid #eee;
+    padding: 8px 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .meal-card.ochtend .card-header .name { font-size: 0.88rem; font-weight: 600; color: #222; }
+
+  /* MIDDAG card — lichtgrijs */
+  .meal-card.middag {
+    background: #f7f7f7;
+    border: 1px solid #d5d5d5;
+  }
+  .meal-card.middag .card-header {
+    background: #efefef;
+    border-bottom: 1px solid #ddd;
+    padding: 8px 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .meal-card.middag .card-header .name { font-size: 0.88rem; font-weight: 600; color: #222; }
+
+  /* AVOND card — donker, zwart */
+  .meal-card.avond {
+    background: #111;
+    border: 1px solid #111;
+  }
+  .meal-card.avond .card-header {
+    background: #111;
+    border-bottom: 1px solid #2a2a2a;
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .meal-card.avond .card-header .name { font-size: 0.95rem; font-weight: 700; color: #fff; }
+
+  /* SNACK card — klein, subtiel */
+  .meal-card.snack {
+    background: #fafafa;
+    border: 1px dashed #ccc;
+  }
+  .meal-card.snack .card-header {
+    background: #fafafa;
+    border-bottom: 1px dashed #ddd;
+    padding: 6px 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .meal-card.snack .card-header .name { font-size: 0.82rem; font-weight: 500; color: #555; font-style: italic; }
+
+  /* Shared header elements */
+  .card-header .type-lbl {
+    font-size: 0.58rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.9px;
+    flex-shrink: 0;
+  }
+  .ochtend .type-lbl { color: #aaa; }
+  .middag .type-lbl { color: #888; }
+  .avond .type-lbl { color: #555; }
+  .snack .type-lbl { color: #bbb; }
+
+  .card-header .meta { margin-left: auto; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .kh-tag { font-size: 0.63rem; }
+  .ochtend .kh-tag, .middag .kh-tag, .snack .kh-tag { color: #aaa; }
+  .avond .kh-tag { color: #666; }
+
+  .portie-badge {
+    font-size: 0.6rem; font-weight: 700; border-radius: 2px; padding: 1px 5px;
+    text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .ochtend .portie-badge, .middag .portie-badge, .snack .portie-badge {
+    border: 1px solid #ccc; color: #888; background: none;
+  }
+  .ochtend .portie-badge.solo, .middag .portie-badge.solo, .snack .portie-badge.solo {
+    border-color: #999; color: #444;
+  }
+  .avond .portie-badge {
+    border: 1px solid #444; color: #ccc; background: none;
+  }
+  .avond .portie-badge.solo { border-color: #888; color: #aaa; }
+
+  /* ── CARD BODY ── */
+  .card-body {
+    padding: 11px 12px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  }
+  @media (max-width: 500px) { .card-body { grid-template-columns: 1fr; } }
+
+  .avond .card-body { padding: 12px 14px; }
+
+  .section-title {
+    font-size: 0.58rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.8px; margin-bottom: 6px;
+  }
+  .ochtend .section-title, .snack .section-title { color: #bbb; }
+  .middag .section-title { color: #aaa; }
+  .avond .section-title { color: #555; }
+
+  .ing-list { list-style: none; }
+  .ing-list li { font-size: 0.79rem; padding: 2px 0; border-bottom: 1px dotted; }
+  .ing-list li:last-child { border-bottom: none; }
+  .ochtend .ing-list li, .snack .ing-list li { color: #333; border-bottom-color: #f0f0f0; }
+  .middag .ing-list li { color: #333; border-bottom-color: #e8e8e8; }
+  .avond .ing-list li { color: #ccc; border-bottom-color: #222; }
+
+  .prep-list { list-style: none; counter-reset: steps; }
+  .prep-list li {
+    font-size: 0.79rem; padding: 3px 0 3px 20px;
+    position: relative; counter-increment: steps;
+    border-bottom: 1px dotted;
+  }
+  .prep-list li:last-child { border-bottom: none; }
+  .prep-list li::before {
+    content: counter(steps); position: absolute; left: 0; top: 3px;
+    font-size: 0.6rem; font-weight: 800; width: 14px; text-align: center;
+  }
+  .ochtend .prep-list li, .snack .prep-list li { color: #333; border-bottom-color: #f0f0f0; }
+  .ochtend .prep-list li::before, .snack .prep-list li::before { color: #ccc; }
+  .middag .prep-list li { color: #333; border-bottom-color: #e8e8e8; }
+  .middag .prep-list li::before { color: #bbb; }
+  .avond .prep-list li { color: #ccc; border-bottom-color: #222; }
+  .avond .prep-list li::before { color: #555; }
+
+  /* ── SHOPPING ── */
+  .shopping-panel { }
+  .shop-header { margin-bottom: 14px; padding-bottom: 10px; border-bottom: 2px solid #111; }
+  .shop-header h2 { font-size: 1.05rem; font-weight: 800; }
+  .shop-header p { font-size: 0.73rem; color: #888; margin-top: 3px; }
+
+  .portie-note {
+    font-size: 0.72rem; color: #666; margin-bottom: 12px;
+    padding: 7px 10px; background: #fff; border: 1px solid #e0e0e0; border-radius: 2px;
+    border-left: 3px solid #111;
+  }
+  .tip-block {
+    font-size: 0.75rem; color: #555; margin-bottom: 14px;
+    padding: 8px 12px; background: #fff; border: 1px solid #e0e0e0; border-radius: 2px;
+  }
+  .tip-block strong { display: block; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.6px; color: #999; margin-bottom: 3px; }
+
+  .print-btn {
+    background: #111; color: #fff; border: none; border-radius: 2px;
+    padding: 7px 14px; font-size: 0.75rem; font-weight: 700; cursor: pointer;
+    margin-bottom: 14px; letter-spacing: 0.3px; transition: background 0.15s;
+  }
+  .print-btn:hover { background: #333; }
+
+  .shop-cat { margin-bottom: 18px; }
+  .shop-cat-title {
+    font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+    color: #111; border-bottom: 2px solid #111; padding-bottom: 5px; margin-bottom: 8px;
+  }
+  .shop-items { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; }
+  @media (max-width: 480px) { .shop-items { grid-template-columns: 1fr; } }
+
+  .shop-item {
+    display: flex; align-items: flex-start; gap: 7px;
+    font-size: 0.79rem; color: #222; padding: 4px 6px;
+    cursor: pointer; border-radius: 2px; transition: background 0.1s;
+  }
+  .shop-item:hover { background: #f0f0f0; }
+  .shop-item.checked { text-decoration: line-through; color: #bbb; }
+  .shop-item input[type="checkbox"] { flex-shrink: 0; margin-top: 2px; width: 13px; height: 13px; accent-color: #111; }
+  .shop-item .qty { font-weight: 700; min-width: 55px; color: #555; font-size: 0.75rem; flex-shrink: 0; }
+
+  .progress-wrap { margin-top: 18px; border-top: 1px solid #ddd; padding-top: 10px; }
+  .progress-label { font-size: 0.68rem; color: #aaa; margin-bottom: 5px; }
+  .progress-bar { background: #e0e0e0; border-radius: 1px; height: 3px; }
+  .progress-fill { background: #111; border-radius: 1px; height: 3px; transition: width 0.3s; }
+
+  @media print {
+    header .week-label, .tabs-bar, .print-btn { display: none !important; }
+    .shopping-panel { display: block !important; }
+    .day-panel { display: none !important; }
+    body { background: white; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Koolhydraatarm Weekmenu</h1>
+  <p>Diabetes type 2 &nbsp;&middot;&nbsp; Lidl</p>
+  <div class="week-label">Week van <span id="week-label"></span></div>
+  <div class="bronnen">
+    <strong>Bronnen:</strong> lowcarbchef.nl &nbsp;&middot;&nbsp; Koolhydraatarm 50 Dagen Programma &nbsp;&middot;&nbsp; Diabetes Omkeren Methode &nbsp;&middot;&nbsp; Lekker Koken voor Diabetici
+  </div>
+  <div class="portie-legenda">
+    <span class="portie-chip">Solo = jij alleen</span>
+    <span class="portie-chip">4 pers. = doordeweeks avond</span>
+    <span class="portie-chip">8 pers. = ma &amp; di avond</span>
+  </div>
+</header>
+
+<div class="tabs-bar" id="tabs-bar">
+  <button class="tab-btn active" onclick="showDay(0)">Maandag</button>
+  <button class="tab-btn" onclick="showDay(1)">Dinsdag</button>
+  <button class="tab-btn" onclick="showDay(2)">Woensdag</button>
+  <button class="tab-btn" onclick="showDay(3)">Donderdag</button>
+  <button class="tab-btn" onclick="showDay(4)">Vrijdag</button>
+  <button class="tab-btn" onclick="showDay(5)">Zaterdag</button>
+  <button class="tab-btn" onclick="showDay(6)">Zondag</button>
+  <button class="tab-btn" onclick="showShopping()">Boodschappen</button>
+</div>
+
+<div class="content">
+
+<!-- ═══════════════════════════════════ MAANDAG -->
+<div class="day-panel active" id="day-0">
+  <div class="day-header">
+    <span class="day-name">Maandag</span>
+    <span class="day-sub">Stevige start van de week</span>
+  </div>
+
+  <div class="meal-section-sep sep-ochtend">
+    <span class="label">Ochtend</span><span class="line"></span>
+  </div>
+  <div class="meal-card ochtend">
+    <div class="card-header">
+      <span class="type-lbl">Ontbijt</span>
+      <span class="name">Roerei met spinazie en spekjes</span>
+      <div class="meta"><span class="portie-badge solo">Solo</span><span class="kh-tag">ca. 3g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div>
+        <div class="section-title">Ingredienten (1 pers.)</div>
+        <ul class="ing-list">
+          <li>2 eieren</li><li>40g verse spinazie</li><li>30g spekjes</li><li>Klontje boter, peper, zout</li>
+        </ul>
+      </div>
+      <div>
+        <div class="section-title">Bereidingswijze</div>
+        <ol class="prep-list">
+          <li>Bak de spekjes droog tot knapperig. Voeg spinazie toe, laat 1 min slinken.</li>
+          <li>Klop eieren los met peper en zout. Voeg boter toe, roer op laag vuur tot net gestold.</li>
+          <li>Schep de spekjes erover en serveer direct.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="meal-section-sep sep-middag">
+    <span class="label">Middag</span><span class="line"></span>
+  </div>
+  <div class="meal-card middag">
+    <div class="card-header">
+      <span class="type-lbl">Lunch</span>
+      <span class="name">Kipfilet salade met avocado</span>
+      <div class="meta"><span class="portie-badge solo">Solo</span><span class="kh-tag">ca. 5g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div>
+        <div class="section-title">Ingredienten (1 pers.)</div>
+        <ul class="ing-list">
+          <li>120g kipfilet</li><li>1/2 avocado</li><li>1/4 komkommer</li>
+          <li>Handvol gemengde sla</li><li>1 el olijfolie + citroensap</li>
+        </ul>
+      </div>
+      <div>
+        <div class="section-title">Bereidingswijze</div>
+        <ol class="prep-list">
+          <li>Bak de kipfilet, 4-5 min per kant. Laat afkoelen en snijd in reepjes.</li>
+          <li>Snijd avocado en komkommer. Leg sla op een bord, schik de rest erop.</li>
+          <li>Besprenkel met olijfolie en citroensap.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="meal-section-sep sep-avond">
+    <span class="label">Avond</span><span class="line"></span>
+  </div>
+  <div class="meal-card avond">
+    <div class="card-header">
+      <span class="type-lbl">Avondeten</span>
+      <span class="name">Gehaktballen in tomatensaus met bloemkoolpuree</span>
+      <div class="meta"><span class="portie-badge">8 pers.</span><span class="kh-tag">ca. 8g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div>
+        <div class="section-title">Ingredienten (8 pers.)</div>
+        <ul class="ing-list">
+          <li>1.5 kg rundergehakt</li><li>2 grote bloemkolen</li>
+          <li>2 potten tomatensaus (zonder suiker)</li>
+          <li>2 uien, 4 teentjes knoflook</li>
+          <li>2 eieren, Italiaanse kruiden</li>
+          <li>150g boter, 200ml slagroom</li>
+        </ul>
+      </div>
+      <div>
+        <div class="section-title">Bereidingswijze</div>
+        <ol class="prep-list">
+          <li>Meng gehakt met eieren, zout, peper, kruiden. Draai ballen ter grootte van een golfbal.</li>
+          <li>Bak rondom bruin in olie. Haal uit de pan. Fruit ui en knoflook, voeg tomatensaus toe. Laat ballen 15 min mee sudderen.</li>
+          <li>Kook bloemkool gaar (12 min). Pureer met boter, room, zout en peper.</li>
+          <li>Serveer gehaktballen met saus op de bloemkoolpuree.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="meal-card snack" style="margin-top:8px;">
+    <div class="card-header">
+      <span class="type-lbl">Snack</span>
+      <span class="name">Walnoten en kaasblokjes</span>
+      <div class="meta"><span class="portie-badge solo">Solo</span><span class="kh-tag">ca. 2g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten</div><ul class="ing-list"><li>Handvol walnoten</li><li>30g belegen kaas</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div><ol class="prep-list"><li>Snijd de kaas in blokjes en serveer met de walnoten.</li></ol></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ DINSDAG -->
+<div class="day-panel" id="day-1">
+  <div class="day-header">
+    <span class="day-name">Dinsdag</span>
+    <span class="day-sub">Visdag</span>
+  </div>
+
+  <div class="meal-section-sep sep-ochtend"><span class="label">Ochtend</span><span class="line"></span></div>
+  <div class="meal-card ochtend">
+    <div class="card-header">
+      <span class="type-lbl">Ontbijt</span>
+      <span class="name">Griekse yoghurt met walnoten en frambozen</span>
+      <div class="meta"><span class="portie-badge solo">Solo</span><span class="kh-tag">ca. 9g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten (1 pers.)</div>
+        <ul class="ing-list"><li>150g volle Griekse yoghurt</li><li>20g walnoten</li><li>40g frambozen</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div>
+        <ol class="prep-list"><li>Schep de yoghurt in een kom.</li><li>Leg frambozen erop, strooi walnoten erover.</li><li>Kies altijd volle yoghurt (min. 8% vet) voor een stabielere bloedsuiker.</li></ol></div>
+    </div>
+  </div>
+
+  <div class="meal-section-sep sep-middag"><span class="label">Middag</span><span class="line"></span></div>
+  <div class="meal-card middag">
+    <div class="card-header">
+      <span class="type-lbl">Lunch</span>
+      <span class="name">Courgettesoep met room</span>
+      <div class="meta"><span class="portie-badge solo">Solo</span><span class="kh-tag">ca. 6g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten (1 pers.)</div>
+        <ul class="ing-list"><li>1/2 courgette</li><li>1/4 ui, 1 teen knoflook</li><li>40ml slagroom</li><li>200ml groentebouillon</li><li>Klontje boter, nootmuskaat</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div>
+        <ol class="prep-list"><li>Fruit ui en knoflook in boter. Voeg courgette toe, bak 2 min mee.</li><li>Giet bouillon erbij, kook 12 min. Pureer glad met staafmixer.</li><li>Roer de room erdoor, breng op smaak met nootmuskaat en peper.</li></ol></div>
+    </div>
+  </div>
+
+  <div class="meal-section-sep sep-avond"><span class="label">Avond</span><span class="line"></span></div>
+  <div class="meal-card avond">
+    <div class="card-header">
+      <span class="type-lbl">Avondeten</span>
+      <span class="name">Zalmfilet met asperges en citroenboter</span>
+      <div class="meta"><span class="portie-badge">8 pers.</span><span class="kh-tag">ca. 4g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten (8 pers.)</div>
+        <ul class="ing-list"><li>1.6 kg zalmfilet (8 x 200g)</li><li>1.5 kg groene asperges</li><li>180g boter</li><li>3 citroenen</li><li>Verse dille, peper, zout</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div>
+        <ol class="prep-list"><li>Breek onderkanten van asperges af. Kook 4-6 min in gezouten water. Giet af.</li><li>Kruid zalm met peper en zout. Bak op de huid, 3-4 min per kant.</li><li>Smelt boter, voeg citroensap en gehakte dille toe.</li><li>Serveer asperges naast zalm, besprenkel met citroenboter.</li></ol></div>
+    </div>
+  </div>
+
+  <div class="meal-card snack" style="margin-top:8px;">
+    <div class="card-header">
+      <span class="type-lbl">Snack</span><span class="name">Komkommer met roomkaas</span>
+      <div class="meta"><span class="portie-badge solo">Solo</span><span class="kh-tag">ca. 2g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten</div><ul class="ing-list"><li>1/4 komkommer</li><li>30g roomkaas naturel</li><li>Verse dille of bieslook</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div><ol class="prep-list"><li>Snijd komkommer in dikke plakken. Meng roomkaas met bieslook. Schep op elk schijfje.</li></ol></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ WOENSDAG -->
+<div class="day-panel" id="day-2">
+  <div class="day-header">
+    <span class="day-name">Woensdag</span>
+    <span class="day-sub">Eidag</span>
+  </div>
+
+  <div class="meal-section-sep sep-ochtend"><span class="label">Ochtend</span><span class="line"></span></div>
+  <div class="meal-card ochtend">
+    <div class="card-header">
+      <span class="type-lbl">Ontbijt</span>
+      <span class="name">Omelet met champignons, paprika en kaas</span>
+      <div class="meta"><span class="portie-badge solo">Solo</span><span class="kh-tag">ca. 4g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten (1 pers.)</div>
+        <ul class="ing-list"><li>2 eieren</li><li>50g champignons</li><li>1/2 paprika</li><li>20g geraspte kaas</li><li>Klontje boter, peper, zout</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div>
+        <ol class="prep-list"><li>Snijd champignons en paprika fijn. Bak 3-4 min in boter. Zet apart.</li><li>Klop eieren los. Verhit boter, giet eieren in pan. Laat onderkant stollen.</li><li>Leg vulling op de helft, strooi kaas erop. Vouw dubbel, laat kaas smelten.</li></ol></div>
+    </div>
+  </div>
+
+  <div class="meal-section-sep sep-middag"><span class="label">Middag</span><span class="line"></span></div>
+  <div class="meal-card middag">
+    <div class="card-header">
+      <span class="type-lbl">Lunch</span>
+      <span class="name">Tonijnsalade met ei, tomaat en olijven</span>
+      <div class="meta"><span class="portie-badge solo">Solo</span><span class="kh-tag">ca. 4g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten (1 pers.)</div>
+        <ul class="ing-list"><li>1 blikje tonijn op water</li><li>1 hardgekookt ei</li><li>1 tomaat</li><li>Handvol olijven</li><li>1 el olijfolie, kappertjes</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div>
+        <ol class="prep-list"><li>Kook het ei hard (10 min), laat afkoelen, pel en halveer.</li><li>Laat tonijn uitlekken. Snijd tomaat in partjes.</li><li>Verdeel alles op een bord, besprenkel met olijfolie, strooi kappertjes erover.</li></ol></div>
+    </div>
+  </div>
+
+  <div class="meal-section-sep sep-avond"><span class="label">Avond</span><span class="line"></span></div>
+  <div class="meal-card avond">
+    <div class="card-header">
+      <span class="type-lbl">Avondeten</span>
+      <span class="name">Kipfilet met courgette-noedels en pesto</span>
+      <div class="meta"><span class="portie-badge">4 pers.</span><span class="kh-tag">ca. 5g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten (4 pers.)</div>
+        <ul class="ing-list"><li>800g kipfilet</li><li>3 courgettes</li><li>1/2 pot groene pesto</li><li>30g parmezaan, pijnboompitten</li><li>Olijfolie, knoflook</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div>
+        <ol class="prep-list"><li>Maak courgette-noedels met kaasschaaf. Leg op keukenpapier met zout.</li><li>Bak kipfilets, 4-5 min per kant. Laat rusten en snijd in reepjes.</li><li>Bak courgette-noedels met knoflook, 2-3 min op hoog vuur — knapperig houden.</li><li>Schep de pesto erdoor, leg kip erop, garneer met parmezaan en pijnboompitten.</li></ol></div>
+    </div>
+  </div>
+
+  <div class="meal-card snack" style="margin-top:8px;">
+    <div class="card-header">
+      <span class="type-lbl">Snack</span><span class="name">Amandelen en olijven</span>
+      <div class="meta"><span class="portie-badge solo">Solo</span><span class="kh-tag">ca. 3g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten</div><ul class="ing-list"><li>Handvol amandelen</li><li>Handvol olijven</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div><ol class="prep-list"><li>Laat olijven uitlekken. Serveer samen met de amandelen.</li></ol></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ DONDERDAG -->
+<div class="day-panel" id="day-3">
+  <div class="day-header">
+    <span class="day-name">Donderdag</span>
+    <span class="day-sub">Rood vlees</span>
+  </div>
+
+  <div class="meal-section-sep sep-ochtend"><span class="label">Ochtend</span><span class="line"></span></div>
+  <div class="meal-card ochtend">
+    <div class="card-header">
+      <span class="type-lbl">Ontbijt</span>
+      <span class="name">Volle kwark met lijnzaad en blauwe bessen</span>
+      <div class="meta"><span class="portie-badge solo">Solo</span><span class="kh-tag">ca. 10g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten (1 pers.)</div>
+        <ul class="ing-list"><li>150g volle kwark</li><li>1 tl lijnzaad</li><li>40g blauwe bessen</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div>
+        <ol class="prep-list"><li>Schep de kwark in een kom.</li><li>Strooi lijnzaad erover — vezelrijk, goed voor bloedsuikerregulatie.</li><li>Leg de blauwe bessen erop.</li></ol></div>
+    </div>
+  </div>
+
+  <div class="meal-section-sep sep-middag"><span class="label">Middag</span><span class="line"></span></div>
+  <div class="meal-card middag">
+    <div class="card-header">
+      <span class="type-lbl">Lunch</span>
+      <span class="name">Bloemkoolsoep met room en spekjes</span>
+      <div class="meta"><span class="portie-badge solo">Solo</span><span class="kh-tag">ca. 7g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten (1 pers.)</div>
+        <ul class="ing-list"><li>1/4 kleine bloemkool</li><li>30g spekjes</li><li>40ml slagroom</li><li>200ml kippenbouillon</li><li>1/4 ui, klontje boter, nootmuskaat</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div>
+        <ol class="prep-list"><li>Fruit ui in boter. Voeg bloemkoolroosjes toe, bak 2 min mee.</li><li>Giet bouillon erbij, kook 12 min. Pureer glad.</li><li>Roer de room erdoor. Bak spekjes knapperig, strooi over de soep.</li></ol></div>
+    </div>
+  </div>
+
+  <div class="meal-section-sep sep-avond"><span class="label">Avond</span><span class="line"></span></div>
+  <div class="meal-card avond">
+    <div class="card-header">
+      <span class="type-lbl">Avondeten</span>
+      <span class="name">Biefstuk met spinazie en champignons in botersaus</span>
+      <div class="meta"><span class="portie-badge">4 pers.</span><span class="kh-tag">ca. 4g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten (4 pers.)</div>
+        <ul class="ing-list"><li>4 biefstukken (ca. 150g p.s.)</li><li>200g verse spinazie</li><li>200g champignons</li><li>80g boter, 2 teentjes knoflook, tijm</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div>
+        <ol class="prep-list"><li>Haal biefstukken 30 min van tevoren uit de koelkast. Kruid met peper en zout.</li><li>Verhit pan tot heel heet. Bak 2-3 min per kant voor medium. Laat 5 min rusten.</li><li>Bak champignons met knoflook en tijm, 4 min. Voeg spinazie toe, laat slinken.</li><li>Smelt boter tot licht bruin. Serveer over biefstuk en groenten.</li></ol></div>
+    </div>
+  </div>
+
+  <div class="meal-card snack" style="margin-top:8px;">
+    <div class="card-header">
+      <span class="type-lbl">Snack</span><span class="name">Hardgekookt ei met mosterd</span>
+      <div class="meta"><span class="portie-badge solo">Solo</span><span class="kh-tag">ca. 1g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten</div><ul class="ing-list"><li>1 ei</li><li>Dijon mosterd</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div><ol class="prep-list"><li>Kook ei 10 min, afkoelen, pellen en halveren. Serveer met een schaaltje mosterd.</li></ol></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ VRIJDAG -->
+<div class="day-panel" id="day-4">
+  <div class="day-header">
+    <span class="day-name">Vrijdag</span>
+    <span class="day-sub">Licht en fris</span>
+  </div>
+
+  <div class="meal-section-sep sep-ochtend"><span class="label">Ochtend</span><span class="line"></span></div>
+  <div class="meal-card ochtend">
+    <div class="card-header">
+      <span class="type-lbl">Ontbijt</span>
+      <span class="name">Avocado met gebakken ei en tomaat</span>
+      <div class="meta"><span class="portie-badge solo">Solo</span><span class="kh-tag">ca. 5g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten (1 pers.)</div>
+        <ul class="ing-list"><li>1/2 avocado</li><li>1 ei</li><li>1 tomaat</li><li>Klontje boter, zout, peper</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div>
+        <ol class="prep-list"><li>Snijd avocado en tomaat in plakken of stukjes.</li><li>Bak het ei spiegelei in boter op laag vuur, ca. 3 min.</li><li>Schik alles op een bord, breng op smaak.</li></ol></div>
+    </div>
+  </div>
+
+  <div class="meal-section-sep sep-middag"><span class="label">Middag</span><span class="line"></span></div>
+  <div class="meal-card middag">
+    <div class="card-header">
+      <span class="type-lbl">Lunch</span>
+      <span class="name">Gevulde paprika met tonijn en roomkaas</span>
+      <div class="meta"><span class="portie-badge solo">Solo</span><span class="kh-tag">ca. 6g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten (1 pers.)</div>
+        <ul class="ing-list"><li>1 paprika (gehalveerd)</li><li>1/2 blikje tonijn op water</li><li>40g roomkaas</li><li>Bieslook, peper</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div>
+        <ol class="prep-list"><li>Halveer de paprika en verwijder zaadjes.</li><li>Laat tonijn uitlekken. Meng met roomkaas en bieslook.</li><li>Vul de paprikahalven. Geen koken nodig.</li></ol></div>
+    </div>
+  </div>
+
+  <div class="meal-section-sep sep-avond"><span class="label">Avond</span><span class="line"></span></div>
+  <div class="meal-card avond">
+    <div class="card-header">
+      <span class="type-lbl">Avondeten</span>
+      <span class="name">Kabeljauw met broccoli in botersaus</span>
+      <div class="meta"><span class="portie-badge">4 pers.</span><span class="kh-tag">ca. 5g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten (4 pers.)</div>
+        <ul class="ing-list"><li>800g kabeljauwfilet</li><li>2 broccolistruiken</li><li>80g boter</li><li>1 citroen</li><li>Kappertjes, peterselie, peper, zout</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div>
+        <ol class="prep-list"><li>Kook broccoli 4-5 min — licht knapperig houden. Giet af.</li><li>Dep kabeljauw droog, kruid met peper en zout. Bak in boter, 3-4 min per kant.</li><li>Smelt resterende boter, voeg citroensap, kappertjes en peterselie toe.</li><li>Serveer kabeljauw op broccoli, schep botersaus erover.</li></ol></div>
+    </div>
+  </div>
+
+  <div class="meal-card snack" style="margin-top:8px;">
+    <div class="card-header">
+      <span class="type-lbl">Snack</span><span class="name">Selderij met roomkaas dip</span>
+      <div class="meta"><span class="portie-badge solo">Solo</span><span class="kh-tag">ca. 2g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten</div><ul class="ing-list"><li>2 stengels selderij</li><li>30g roomkaas met kruiden</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div><ol class="prep-list"><li>Was selderij en snijd in stukken van 8 cm. Serveer met roomkaas als dip.</li></ol></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ ZATERDAG -->
+<div class="day-panel" id="day-5">
+  <div class="day-header">
+    <span class="day-name">Zaterdag</span>
+    <span class="day-sub">Weekend</span>
+  </div>
+
+  <div class="meal-section-sep sep-ochtend"><span class="label">Ochtend</span><span class="line"></span></div>
+  <div class="meal-card ochtend">
+    <div class="card-header">
+      <span class="type-lbl">Ontbijt</span>
+      <span class="name">Scrambled eggs met gerookte zalm</span>
+      <div class="meta"><span class="portie-badge solo">Solo</span><span class="kh-tag">ca. 2g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten (1 pers.)</div>
+        <ul class="ing-list"><li>2 eieren</li><li>40g gerookte zalm</li><li>1 el slagroom</li><li>Kappertjes, verse dille, klontje boter</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div>
+        <ol class="prep-list"><li>Klop eieren los met de room en peper.</li><li>Smelt boter op laag vuur. Roer eieren continu. Haal van het vuur terwijl ze nog glanzend zijn.</li><li>Leg de zalm erop en garneer met kappertjes en dille.</li></ol></div>
+    </div>
+  </div>
+
+  <div class="meal-section-sep sep-middag"><span class="label">Middag</span><span class="line"></span></div>
+  <div class="meal-card middag">
+    <div class="card-header">
+      <span class="type-lbl">Lunch</span>
+      <span class="name">Caesar salade met gegrilde kip en bacon</span>
+      <div class="meta"><span class="portie-badge solo">Solo</span><span class="kh-tag">ca. 4g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten (1 pers.)</div>
+        <ul class="ing-list"><li>120g kipfilet</li><li>40g bacon</li><li>1 hardgekookt ei</li><li>Handvol Romaine sla</li><li>20g parmezaan, 1 el olijfolie + citroensap</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div>
+        <ol class="prep-list"><li>Kook het ei hard. Gril of bak de kip gaar, snijd in reepjes.</li><li>Bak de bacon knapperig in een droge pan.</li><li>Meng olijfolie en citroensap als dressing. Schik alles op een bord met parmezaan.</li></ol></div>
+    </div>
+  </div>
+
+  <div class="meal-section-sep sep-avond"><span class="label">Avond</span><span class="line"></span></div>
+  <div class="meal-card avond">
+    <div class="card-header">
+      <span class="type-lbl">Avondeten</span>
+      <span class="name">Varkensstoofpot met prei en knolselderij</span>
+      <div class="meta"><span class="portie-badge">4 pers.</span><span class="kh-tag">ca. 8g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten (4 pers.)</div>
+        <ul class="ing-list"><li>800g varkensstoofvlees</li><li>1/2 knolselderij (in blokjes)</li><li>1 prei (in ringen)</li><li>150ml slagroom</li><li>400ml bouillon, tijm, laurier, knoflook</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div>
+        <ol class="prep-list"><li>Snijd vlees in grove stukken. Bak rondom bruin in olijfolie. Haal uit de pan.</li><li>Bak prei en knolselderij 3 min in dezelfde pan. Doe het vlees terug.</li><li>Voeg bouillon en kruiden toe. Stoof op laag vuur met deksel 1,5-2 uur.</li><li>Roer de slagroom erdoor, breng op smaak. Serveer direct.</li></ol></div>
+    </div>
+  </div>
+
+  <div class="meal-card snack" style="margin-top:8px;">
+    <div class="card-header">
+      <span class="type-lbl">Snack</span><span class="name">Notenmix en kaasblokjes</span>
+      <div class="meta"><span class="portie-badge solo">Solo</span><span class="kh-tag">ca. 3g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten</div><ul class="ing-list"><li>Handvol notenmix</li><li>30g belegen kaas in blokjes</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div><ol class="prep-list"><li>Snijd de kaas in blokjes. Serveer samen met de notenmix.</li></ol></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ ZONDAG -->
+<div class="day-panel" id="day-6">
+  <div class="day-header">
+    <span class="day-name">Zondag</span>
+    <span class="day-sub">Rustig koken &nbsp;&middot;&nbsp; Chia pudding zaterdagavond maken!</span>
+  </div>
+
+  <div class="meal-section-sep sep-ochtend"><span class="label">Ochtend</span><span class="line"></span></div>
+  <div class="meal-card ochtend">
+    <div class="card-header">
+      <span class="type-lbl">Ontbijt</span>
+      <span class="name">Chia pudding met kokosmelk en aardbeien</span>
+      <div class="meta"><span class="portie-badge solo">Solo</span><span class="kh-tag">ca. 8g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten (1 pers.) — zaterdagavond maken</div>
+        <ul class="ing-list"><li>80ml kokosmelk (vol)</li><li>80ml water</li><li>1,5 el chiazaad</li><li>60g aardbeien</li><li>Paar druppels vanille extract</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div>
+        <ol class="prep-list"><li>Meng kokosmelk, water en vanille in een potje. Roer chiazaad erdoor.</li><li>Na 5 min opnieuw roeren om klonten te voorkomen. Dek af.</li><li>Een nacht in de koelkast. Snijd 's ochtends de aardbeien en leg erop.</li></ol></div>
+    </div>
+  </div>
+
+  <div class="meal-section-sep sep-middag"><span class="label">Middag</span><span class="line"></span></div>
+  <div class="meal-card middag">
+    <div class="card-header">
+      <span class="type-lbl">Lunch</span>
+      <span class="name">Courgette pizza met mozzarella</span>
+      <div class="meta"><span class="portie-badge solo">Solo</span><span class="kh-tag">ca. 7g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten (1 pers.)</div>
+        <ul class="ing-list"><li>1/2 courgette (dikke plakken)</li><li>1/2 bol mozzarella</li><li>2 el tomatensaus (zonder suiker)</li><li>Champignons, olijven als topping</li><li>Oregano, olijfolie</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div>
+        <ol class="prep-list"><li>Oven op 200°C. Snijd courgette in plakken van 1 cm. Dep droog met zout na 5 min.</li><li>Bak 10 min voor in de oven met olijfolie. Leg tomatensaus, mozzarella en topping erop.</li><li>Strooi oregano erover. Bak nog 10-12 min tot kaas gesmolten is.</li></ol></div>
+    </div>
+  </div>
+
+  <div class="meal-section-sep sep-avond"><span class="label">Avond</span><span class="line"></span></div>
+  <div class="meal-card avond">
+    <div class="card-header">
+      <span class="type-lbl">Avondeten</span>
+      <span class="name">Lamskoteletten met geroosterde paprika en aubergine</span>
+      <div class="meta"><span class="portie-badge">4 pers.</span><span class="kh-tag">ca. 7g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten (4 pers.)</div>
+        <ul class="ing-list"><li>8 lamskoteletten</li><li>2 paprika's</li><li>1 aubergine</li><li>Verse rozemarijn, knoflook</li><li>Olijfolie, peper, zout</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div>
+        <ol class="prep-list"><li>Oven op 200°C. Snijd paprika en aubergine grof. Meng met olijfolie en knoflook. Rooster 25 min.</li><li>Wrijf koteletten in met olijfolie, rozemarijn, zout en peper.</li><li>Verhit grillpan op hoog vuur. Bak koteletten 3 min per kant voor roze van binnen.</li><li>Laat 3 min rusten. Serveer op de geroosterde groenten.</li></ol></div>
+    </div>
+  </div>
+
+  <div class="meal-card snack" style="margin-top:8px;">
+    <div class="card-header">
+      <span class="type-lbl">Snack</span><span class="name">Gevulde champignons met roomkaas</span>
+      <div class="meta"><span class="portie-badge solo">Solo</span><span class="kh-tag">ca. 2g KH</span></div>
+    </div>
+    <div class="card-body">
+      <div><div class="section-title">Ingredienten</div><ul class="ing-list"><li>2 grote champignons</li><li>30g roomkaas</li><li>Bieslook, knoflook, peper</li></ul></div>
+      <div><div class="section-title">Bereidingswijze</div><ol class="prep-list"><li>Oven op 180°C. Verwijder de steeltjes. Meng roomkaas met knoflook en bieslook. Vul de champignons en bak 10-12 min.</li></ol></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ BOODSCHAPPEN -->
+<div class="shopping-panel" id="shopping">
+  <div class="shop-header">
+    <h2>Boodschappenlijst</h2>
+    <p>Week voor 1 gezin &nbsp;&middot;&nbsp; Lidl</p>
+  </div>
+
+  <button class="print-btn" onclick="window.print()">Afdrukken / opslaan als PDF</button>
+
+  <div class="portie-note">
+    Ontbijt en lunch zijn voor 1 persoon. Maandag- en dinsdagavond voor 8 personen. Woensdag t/m zondag avond voor 4 personen.
+  </div>
+  <div class="tip-block">
+    <strong>Tip voor bij de Lidl</strong>
+    Diepvriesgroenten zijn even voedzaam als vers en goedkoper. Koop vlees in grote verpakkingen en vries in porties in. Check altijd de koolhydraten op het etiket — vermijd verborgen suikers.
+  </div>
+
+  <div class="shop-cat"><div class="shop-cat-title">Vlees en vis</div><div class="shop-items" id="vlees-items"></div></div>
+  <div class="shop-cat"><div class="shop-cat-title">Groenten en fruit</div><div class="shop-items" id="groenten-items"></div></div>
+  <div class="shop-cat"><div class="shop-cat-title">Zuivel en eieren</div><div class="shop-items" id="zuivel-items"></div></div>
+  <div class="shop-cat"><div class="shop-cat-title">Droog en houdbaar</div><div class="shop-items" id="droog-items"></div></div>
+
+  <div class="progress-wrap">
+    <div class="progress-label">Afgevinkt: <span id="progress-pct">0%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+</div>
+
+</div><!-- end .content -->
+
+<script>
+const tabs = document.querySelectorAll('.tab-btn');
+function showDay(i) {
+  document.querySelectorAll('.day-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('shopping').classList.remove('active');
+  document.getElementById('day-' + i).classList.add('active');
+  tabs.forEach(t => t.classList.remove('active'));
+  tabs[i].classList.add('active');
+}
+function showShopping() {
+  document.querySelectorAll('.day-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('shopping').classList.add('active');
+  tabs.forEach(t => t.classList.remove('active'));
+  tabs[7].classList.add('active');
+}
+
+// Week label
+const now = new Date();
+const d = now.getDay();
+const monday = new Date(new Date().setDate(now.getDate() - d + (d === 0 ? -6 : 1)));
+document.getElementById('week-label').textContent = monday.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
+
+// Today marker
+const todayIdx = (new Date().getDay() + 6) % 7;
+if (todayIdx >= 0 && todayIdx < 7) tabs[todayIdx].classList.add('today-marker');
+
+// Shopping data
+const boodschappen = {
+  'vlees-items': [
+    {qty:'1.5 kg', name:'Rundergehakt (ma avond)'},
+    {qty:'1.6 kg', name:'Zalmfilet (di avond)'},
+    {qty:'800g', name:'Kipfilet (wo avond + lunch)'},
+    {qty:'4 stuks', name:'Biefstuk ~150g p.s. (do avond)'},
+    {qty:'800g', name:'Kabeljauwfilet (vr avond)'},
+    {qty:'800g', name:'Varkensstoofvlees (za avond)'},
+    {qty:'8 stuks', name:'Lamskoteletten (zo avond)'},
+    {qty:'100g', name:'Spekjes (ontbijt + lunch)'},
+    {qty:'100g', name:'Gerookte zalm (za ontbijt)'},
+    {qty:'2 blikjes', name:'Tonijn op water (wo + vr)'},
+    {qty:'100g', name:'Bacon (za lunch)'},
+  ],
+  'groenten-items': [
+    {qty:'200g', name:'Verse spinazie'},
+    {qty:'2 stuks', name:"Avocado's"},
+    {qty:'1 stuks', name:'Komkommer'},
+    {qty:'4 stuks', name:'Courgette'},
+    {qty:'2 stuks', name:'Bloemkool'},
+    {qty:'250g', name:'Champignons'},
+    {qty:'5 stuks', name:"Paprika's (mix)"},
+    {qty:'1.5 kg', name:'Groene asperges'},
+    {qty:'2 stuks', name:'Broccoli'},
+    {qty:'2 stuks', name:'Tomaten'},
+    {qty:'40g', name:'Frambozen'},
+    {qty:'40g', name:'Blauwe bessen'},
+    {qty:'60g', name:'Aardbeien'},
+    {qty:'1 stronk', name:'Selderij'},
+    {qty:'1 stuks', name:'Aubergine'},
+    {qty:'1/2 stuks', name:'Knolselderij'},
+    {qty:'1 stuks', name:'Prei'},
+    {qty:'4 stuks', name:'Citroen'},
+    {qty:'1 zak', name:'Gemengde sla / Romaine'},
+    {qty:'1 bos', name:'Verse dille'},
+  ],
+  'zuivel-items': [
+    {qty:'15 stuks', name:'Eieren'},
+    {qty:'150g', name:'Volle Griekse yoghurt'},
+    {qty:'150g', name:'Volle kwark'},
+    {qty:'200g', name:'Roomkaas naturel'},
+    {qty:'500ml', name:'Slagroom'},
+    {qty:'1 blik', name:'Kokosmelk'},
+    {qty:'1 bol', name:'Mozzarella'},
+    {qty:'150g', name:'Belegen kaas'},
+    {qty:'200g', name:'Boter'},
+    {qty:'50g', name:'Parmezaan'},
+  ],
+  'droog-items': [
+    {qty:'100g', name:'Walnoten'},
+    {qty:'100g', name:'Amandelen'},
+    {qty:'1 fles', name:'Extra vierge olijfolie'},
+    {qty:'2 potten', name:'Tomatensaus (zonder suiker)'},
+    {qty:'1 pot', name:'Groene pesto'},
+    {qty:'1 pot', name:'Groene olijven'},
+    {qty:'1 pot', name:'Kappertjes'},
+    {qty:'1 pak', name:'Lijnzaad'},
+    {qty:'1 pak', name:'Chiazaad'},
+    {qty:'1 pot', name:'Dijon mosterd'},
+    {qty:'1 zakje', name:'Pijnboompitten'},
+    {qty:'1 flesje', name:'Vanille extract'},
+  ],
+};
+
+let checkState = {};
+function buildShoppingList() {
+  Object.keys(boodschappen).forEach(cid => {
+    const container = document.getElementById(cid);
+    if (!container) return;
+    boodschappen[cid].forEach((item, i) => {
+      const key = cid + '-' + i;
+      const div = document.createElement('div');
+      div.className = 'shop-item' + (checkState[key] ? ' checked' : '');
+      div.innerHTML = `<input type="checkbox" id="${key}" ${checkState[key]?'checked':''}><label for="${key}" style="display:flex;gap:4px;cursor:pointer;"><span class="qty">${item.qty}</span><span>${item.name}</span></label>`;
+      div.querySelector('input').addEventListener('change', e => {
+        checkState[key] = e.target.checked;
+        div.classList.toggle('checked', e.target.checked);
+        updateProgress();
+      });
+      container.appendChild(div);
+    });
+  });
+  updateProgress();
+}
+function updateProgress() {
+  const total = Object.values(boodschappen).reduce((s,a) => s+a.length, 0);
+  const done = Object.values(checkState).filter(Boolean).length;
+  const pct = Math.round(done/total*100);
+  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+buildShoppingList();
+</script>
+</body>
+</html>
