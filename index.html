@@ -259,6 +259,15 @@
   .shop-item.checked { text-decoration: line-through; color: #bbb; }
   .shop-item input[type="checkbox"] { flex-shrink: 0; margin-top: 2px; width: 13px; height: 13px; accent-color: #111; }
   .shop-item .qty { font-weight: 700; min-width: 55px; color: #555; font-size: 0.75rem; flex-shrink: 0; }
+  .ah-link {
+    margin-left: auto; flex-shrink: 0;
+    font-size: 0.58rem; font-weight: 700; letter-spacing: 0.3px;
+    color: #0068a3; text-decoration: none;
+    padding: 2px 6px; border: 1px solid #0068a3; border-radius: 2px;
+    opacity: 0.4; transition: opacity 0.15s; white-space: nowrap;
+  }
+  .ah-link:hover { opacity: 1; }
+  .shop-item.checked .ah-link { opacity: 0.15; }
 
   .progress-wrap { margin-top: 18px; border-top: 1px solid #ddd; padding-top: 10px; }
   .progress-label { font-size: 0.68rem; color: #aaa; margin-bottom: 5px; }
@@ -923,7 +932,8 @@ function buildShoppingList() {
       const key = cid + '-' + i;
       const div = document.createElement('div');
       div.className = 'shop-item' + (checkState[key] ? ' checked' : '');
-      div.innerHTML = `<input type="checkbox" id="${key}" ${checkState[key]?'checked':''}><label for="${key}" style="display:flex;gap:4px;cursor:pointer;"><span class="qty">${item.qty}</span><span>${item.name}</span></label>`;
+      const ahQuery = encodeURIComponent(item.name.replace(/\s*\(.*?\)/g, '').trim());
+      div.innerHTML = `<input type="checkbox" id="${key}" ${checkState[key]?'checked':''}><label for="${key}" style="display:flex;gap:4px;cursor:pointer;flex:1;"><span class="qty">${item.qty}</span><span>${item.name}</span></label><a class="ah-link" href="https://www.ah.nl/zoeken?query=${ahQuery}" target="_blank" onclick="event.stopPropagation()">AH</a>`;
       div.querySelector('input').addEventListener('change', e => {
         checkState[key] = e.target.checked;
         div.classList.toggle('checked', e.target.checked);
